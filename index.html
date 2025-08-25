@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>郵便番号検索</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+</head>
+<body>
+    <div id="app">
+        <section class="section">
+            <div class="container">
+                <h1 class="title has-text-centered">郵便番号検索</h1>
+                
+                <div class="columns is-centered">
+                    <div class="column is-half">
+                        <div class="field">
+                            <label class="label">郵便番号</label>
+                            <div class="control">
+                                <input 
+                                    class="input" 
+                                    type="text" 
+                                    placeholder="例: 7830060 または 783-0060"
+                                    v-model="zipcode"
+                                    @keyup.enter="searchAddress"
+                                >
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <div class="control">
+                                <button 
+                                    class="button is-primary is-fullwidth"
+                                    @click="searchAddress"
+                                    :class="{ 'is-loading': loading }"
+                                    :disabled="!zipcode || loading"
+                                >
+                                    検索
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div v-if="errorMessage" class="notification is-danger">
+                            {{ errorMessage }}
+                        </div>
+                        
+                        <div v-if="address" class="notification is-success">
+                            <strong>住所:</strong> {{ address }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    zipcode: '',
+                    address: '',
+                    errorMessage: '',
+                    loading: false
+                }
+            },
+            methods: {
+                async searchAddress() {
+                    if (!this.zipcode) {
+                        this.errorMessage = '郵便番号を入力してください。';
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.errorMessage = '';
+                    this.address = '';
+
+                    try {
+                        const cleanZipcode = this.zipcode.replace('-', '');
+                        
+                        if (!/^\d{7}$/.test(cleanZipcode)) {
+                            this.errorMessage = '郵便番号は7桁の数字で入力してください。';
+                            return;
+                        }
+
+                        const response = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${cleanZipcode}`);
+                        const data = await response.json();
+
+                        if (data.status === 200 && data.results && data.results.length > 0) {
+                            const result = data.results[0];
+                            this.address = result.address1 + result.address2 + result.address3;
+                        } else if (data.message) {
+                            this.errorMessage = data.message;
+                        } else {
+                            this.errorMessage = '該当する住所が見つかりませんでした。';
+                        }
+                    } catch (error) {
+                        this.errorMessage = 'APIの取得でエラーが発生しました。';
+                        console.error('Error:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
