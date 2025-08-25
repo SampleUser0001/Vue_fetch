@@ -77,34 +77,35 @@
                     this.errorMessage = '';
                     this.address = '';
 
-                    try {
-                        const cleanZipcode = this.zipcode.replace('-', '');
-                        
-                        if (!/^\d{7}$/.test(cleanZipcode)) {
-                            this.errorMessage = '郵便番号は7桁の数字で入力してください。';
-                            return;
-                        }
+                    const cleanZipcode = this.zipcode.replace('-', '');
 
-                        const response = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${cleanZipcode}`);
-                        const data = await response.json();
+                    // if (!/^\d{7}$/.test(cleanZipcode)) {
+                    //     this.errorMessage = '郵便番号は7桁の数字で入力してください。';
+                    //     return;
+                    // }
 
-                        if (data.status === 200 && data.results && data.results.length > 0) {
-                            const result = data.results[0];
+                    fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${cleanZipcode}`
+                    ).then(res => {
+                        return res.json();
+                    }).then(res => {
+                        if (res.status === 200 && res.results && res.results.length > 0) {
+                            const result = res.results[0];
                             this.address = result.address1 + result.address2 + result.address3;
-                        } else if (data.message) {
-                            this.errorMessage = data.message;
+                        } else if (res.message) {
+                            this.errorMessage = res.message;
                         } else {
                             this.errorMessage = '該当する住所が見つかりませんでした。';
                         }
-                    } catch (error) {
+                    }).catch(err => {
                         this.errorMessage = 'APIの取得でエラーが発生しました。';
-                        console.error('Error:', error);
-                    } finally {
+                    }).finally(() => {
                         this.loading = false;
+                    });
+
                     }
                 }
             }
-        }).mount('#app');
+        ).mount('#app');
     </script>
 </body>
 </html>
