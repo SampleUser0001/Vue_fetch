@@ -36,3 +36,7 @@ https://zipcloud.ibsnet.co.jp/doc/api
     - 1件目だけで良いです。
 - エラーが発生した場合
     - messageを表示してください。
+
+## Pages
+
+[https://sampleuser0001.github.io/Vue_fetch/](https://sampleuser0001.github.io/Vue_fetch/)
